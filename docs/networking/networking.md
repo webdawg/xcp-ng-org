@@ -125,6 +125,38 @@ Otherwise, packets may be fragmented or even dropped.
 It needs to be properly configured on the switch, within the XCP-ng network, and on the VM's network interface.
 :::
 
+### VLAN Filtering
+
+It is possible to limit a VM to see only some VLANs on the trunk link shared as VIF.
+Once enabled, XCP-ng evaluates incoming frames against configured rules before allowing inbound or outbound traffic to traverse the network.
+Frames are sent either tagged (IEEE 802.1Q) or untagged depending on port configuration requirements.
+
+The general use case for VLAN filtering is providing trunk to some VM in multi-tenants configuration.
+For example, having a VM firewall with VLAN trunking but seeing only a subset of the VLANs present on the trunk.
+
+The filtering is enabled on a VIF as soon the VIF's `trunks` attribute is set.
+This attribute is attached to the VIF, it means that it will follow the VIF during its whole lifecycle (VM startup, VM migration, ...)
+
+The configuration could be done via `xe` command-line.
+
+```console
+## enable VLAN filtering by setting the list of allowed VLANs (erasing any previous configuration)
+# xe vif-param-set uuid=<vif-uuid> trunks=10,20,21,22,1024
+
+## add one VLAN to the current list
+# xe vif-param-add uuid=<vif-uuid> param-name=trunks param-key=23
+
+## remove one VLAN from the current list
+# xe vif-param-remove uuid=<vif-uuid> param-name=trunks param-key=10
+
+## get the list of VLANs
+# xe vif-param-get uuid=<vif-uuid> param-name=trunks
+20,21,22,23,1024
+
+## clear the whole list (disable VLAN filtering on the VIF)
+# xe vif-param-clear uuid=<vif-uuid> param-name=trunks
+```
+
 ### MTU and VLAN interaction
 
 When you create a VLAN-enabled network in Xen Orchestra, it will share the same bridge as the underlying network.
